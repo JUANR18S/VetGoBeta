@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">VetGoBeta</string>
+    <string name="title">VetGo</string>
+    <string name="ingrese_email">Ingrese correo</string>
+    <string name="Password">Constraseña</string>
+    <string name="btn_login">Iniciar sesion</string>
+    <string name="registro">Registrar</string>
+    <string name="olvidaste_pass">¿Olvidaste tu contraseña?</string>
+    <string name="nombre_completo_registro">Nombre completo</string>
+    <string name="cel_registro">Celular</string>
+    <string name="doc_registro">Documento</string>
+    <string name="mail_registro">Correo</string>
+    <string name="pass_min6_registro">Contraseña (mín. 6)</string>
+    <string name="confirmar_contrase_a">Confirmar contraseña</string>
+    <string name="crear_cuenta">Crear cuenta</string>
+    <string name="cancelar">cancelar\n</string>
+</resources>
