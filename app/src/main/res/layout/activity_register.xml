@@ -115,6 +115,14 @@
             android:backgroundTint="@color/red"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btnSignIn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/iniciar_sesion"
+            android:visibility="gone"/>
+
     </LinearLayout>
 </ScrollView>
 

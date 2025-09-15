@@ -14,4 +14,5 @@
     <string name="confirmar_contrase_a">Confirmar contraseña</string>
     <string name="crear_cuenta">Crear cuenta</string>
     <string name="cancelar">cancelar\n</string>
+    <string name="iniciar_sesion">signin</string>
 </resources>

@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvRegister: TextView
     private lateinit var tvForgot:   TextView
 
-    // 2) ACCESO A FIREBASE (OK)
+    // 2) ACCESO A FIREBASE (no olvidar importar)
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
             val email = etEmail.text?.toString()?.trim().orEmpty()
             val pass  = etPass.text?.toString()?.trim().orEmpty()
 
-            // 5.3 Validaciones mínimas en cliente
+            // 5.3 Validaciones correo clave
             var ok = true
             if (email.isBlank()) {
                 tilEmail.error = "Ingresa tu email"; ok = false }
