@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.util.Patterns
 import android.widget.Button
 import android.widget.Toast
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -146,39 +147,34 @@ class RegisterActivity : AppCompatActivity() {
 
         // Deshabilita botón para evitar toques repetidos
         btnCreate.isEnabled = false
+        btnCreate.isPressed = false
+        btnCreate.isSelected = false
+        btnCreate.isEnabled = false
 
         // 4) Crear usuario en Auth
         auth.createUserWithEmailAndPassword(email, p1)
             .addOnSuccessListener {
-                val uid = auth.currentUser?.uid
-                if (uid == null) {
-                    toast("No se pudo obtener el usuario")
-                    btnCreate.isEnabled = true
-                    return@addOnSuccessListener
-                }
+                auth.currentUser?.sendEmailVerification()
+                toast("Cuenta creada. Revisa tu correo para verificar.")
 
-                // 5) Guardar datos extra en Firestore: /users/{uid}
-                val data = hashMapOf(
-                    "name" to name,
-                    "phone" to phone,
-                    "document" to doc,
-                    "email" to email,
-                    "createdAt" to System.currentTimeMillis()
-                )
+                // Notificación local (si Android 13+, pedirá permiso una vez)
+                notifySuccess()
 
-                db.collection("users").document(uid).set(data)
-                    .addOnSuccessListener {
-                        // 6) Enviar verificación y cerrar
-                        auth.currentUser?.sendEmailVerification()
-                        toast("Cuenta creada. Revisa tu correo para verificar.")
-                        notifySuccess() // Llama a la función de notificación aquí
-                        finish() // volver a Login
-                    }
-                    .addOnFailureListener { e ->
-                        toast(e.localizedMessage ?: "Error guardando datos")
-                        btnCreate.isEnabled = true
-                    }
+                // Cerrar sesión para que MainActivity no salte al mapa
+                auth.signOut()
+
+                // Mostrar botón "Iniciar sesión" y bloquear "Crear cuenta"
+                btnSignIn.visibility = View.VISIBLE
+                btnSignIn.isEnabled = true
+                btnCreate.isEnabled = false
+
+                // IMPORTANTE: no llames finish() aquí
             }
+            .addOnFailureListener { e ->
+                toast(e.localizedMessage ?: "Error guardando datos")
+                btnCreate.isEnabled = true
+            }
+
             .addOnFailureListener { e ->
                 toast(e.localizedMessage ?: "Error al registrar")
                 btnCreate.isEnabled = true
@@ -188,16 +184,29 @@ class RegisterActivity : AppCompatActivity() {
     // --- Cancelar con confirmación si el formulario no está vacío ---
     private fun handleCancel() {
         if (isFormEmpty()) {
+            // Si está vacío, solo vuelve al login y fuerza a quedarse ahí
+            auth.signOut()
+            startActivity(Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            })
             finish()
             return
         }
+
         MaterialAlertDialogBuilder(this)
             .setTitle("Cancelar registro")
             .setMessage("Se perderán los datos ingresados. ¿Deseas salir?")
             .setNegativeButton("Seguir aquí", null)
-            .setPositiveButton("Salir") { _, _ -> finish() }
+            .setPositiveButton("Salir") { _, _ ->
+                auth.signOut()
+                startActivity(Intent(this, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                })
+                finish()
+            }
             .show()
     }
+
 
 
     // ¿Está todo en blanco?

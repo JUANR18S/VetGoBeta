@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/Mi_perfil"    android:title="Perfil" />
+    <item android:id="@+id/Mis_mascotas"   android:title="Mis Mascotas" />
+    <item android:id="@+id/VetWallet"     android:title="VetWallet" />
+    <item android:id="@+id/Directorio" android:title="Directorio" />
+    <item android:id="@+id/VetShop" android:title="VetShop" />
+    <item android:id="@+id/Mis_citas" android:title="Mis Citas" />
+    <item android:id="@+id/Historial" android:title="Historial" />
+    <item android:id="@+id/Notificaciones" android:title="Notificaciones" />
+    <item android:id="@+id/Ajustes" android:title="Ajustes" />
+    <item android:id="@+id/Cerrar_sesion" android:title="Cerrar Sesión" />
+</menu>

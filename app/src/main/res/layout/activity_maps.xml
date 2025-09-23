@@ -14,4 +14,41 @@
       app:layout_constraintBottom_toBottomOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"/>
+
+  <com.google.android.material.floatingactionbutton.FloatingActionButton
+      android:id="@+id/btnMenuNav"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="50dp"
+      android:layout_marginEnd="30dp"
+      android:contentDescription="@string/menu"
+      android:backgroundTint="@color/white"
+      app:srcCompat="@android:drawable/ic_dialog_dialer"
+      app:tint="@color/deep_blue"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintEnd_toEndOf="parent" />
+
+  <Button
+      android:id="@+id/btnCitaInmediata"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/cita_inmediata"
+      android:layout_marginBottom="8dp"
+      android:backgroundTint="@color/green"
+      app:layout_constraintBottom_toTopOf="@id/btnVolverLogin"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"/>
+
+  <Button
+      android:id="@+id/btnVolverLogin"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/close_sesion"
+      android:layout_margin="16dp"
+      android:backgroundTint="@color/red"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"/>
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

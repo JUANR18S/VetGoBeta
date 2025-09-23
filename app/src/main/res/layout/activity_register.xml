@@ -121,7 +121,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/iniciar_sesion"
-            android:visibility="gone"/>
+            android:backgroundTint="@color/deep_blue"
+            android:textColor="@color/white"
+            android:visibility="gone"
+            android:layout_marginTop="12dp"/>
 
     </LinearLayout>
 </ScrollView>

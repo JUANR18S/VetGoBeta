@@ -14,5 +14,15 @@
     <string name="confirmar_contrase_a">Confirmar contraseña</string>
     <string name="crear_cuenta">Crear cuenta</string>
     <string name="cancelar">cancelar\n</string>
-    <string name="iniciar_sesion">signin</string>
+    <string name="iniciar_sesion">Sign In</string>
+    <string name="close_sesion">Cerrar sesión</string>
+    <string name="cita_inmediata">Cita Inmediata</string>
+    <string name="agregar_foto_opcional">Agregar foto (opcional)</string>
+    <string name="enviar">enviar\n</string>
+    <string name="menu">Menú</string>
+    <string name="nombre_completo">Nombre completo</string>
+    <string name="nombre_de_la_mascota">Nombre de la mascota</string>
+    <string name="correo">Correo</string>
+    <string name="motivo_de_consulta">Motivo de consulta</string>
+    <string name="direcci_n">Dirección</string>
 </resources>

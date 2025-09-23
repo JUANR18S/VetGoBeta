@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
@@ -16,32 +16,32 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.VetGoBeta">
-
+        <activity
+            android:name=".Citas_Inmediatas"
+            android:exported="false" />
         <activity
             android:name=".RegisterActivity"
             android:exported="false" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key" />
-
-        <!-- Splash como launcher y con el TEMA DE SPLASH -->
+            android:value="@string/google_maps_key" /> <!-- Splash como launcher y con el TEMA DE SPLASH -->
         <activity
             android:name=".SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.VetGoBeta.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".Maps_Activity"
             android:exported="false" />
-
         <activity
             android:name=".MainActivity"
             android:exported="true" />
     </application>
+
 </manifest>

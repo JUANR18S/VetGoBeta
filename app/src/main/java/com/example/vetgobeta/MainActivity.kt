@@ -2,6 +2,9 @@ package com.example.vetgobeta
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -9,6 +12,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
@@ -33,6 +37,28 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        // --- CÓDIGO PARA COLOREAR EL TEXTO ---
+        val tvTitle = findViewById<TextView>(R.id.tvTitle)
+        val fullText = getString(R.string.title) // Asumiendo que tu string es "VetGo"
+
+        val spannable = SpannableStringBuilder(fullText)
+        val greenColor = ContextCompat.getColor(this, R.color.green)
+
+        // Encuentra el inicio de la subcadena "Go"
+        val startIndex = fullText.indexOf("Go")
+        if (startIndex != -1) {
+            // Aplica el color verde a la subcadena "Go"
+            spannable.setSpan(
+                ForegroundColorSpan(greenColor),
+                startIndex,
+                startIndex + "Go".length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+
+        tvTitle.text = spannable
+        // --- FIN DEL CÓDIGO PARA COLOREAR ---
 
         val root = findViewById<View>(R.id.main)
         root?.let {
