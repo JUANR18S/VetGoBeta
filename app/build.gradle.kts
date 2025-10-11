@@ -54,6 +54,10 @@ dependencies {
     //splashScreen.
     implementation("androidx.core:core-splashscreen:1.0.1")
 
+    //Google OAuth
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation("com.google.firebase:firebase-auth:23.0.0")
+
 
     // Compose (SplashScreen)
     implementation(platform("androidx.compose:compose-bom:2025.08.01"))

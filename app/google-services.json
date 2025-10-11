@@ -12,7 +12,20 @@
           "package_name": "com.example.vetgobeta"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "155597930475-o91epndhk7k9oqfblsi0id7413007abo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vetgobeta",
+            "certificate_hash": "e40551a8578376027c6c446e455a862f16a94c0a"
+          }
+        },
+        {
+          "client_id": "155597930475-q3su90k9hatbusbrhvjv8dv6k0ec9gq0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCd91BtX-kqj6NbXl8ghnYicD9PwX4JJWE"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "155597930475-q3su90k9hatbusbrhvjv8dv6k0ec9gq0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

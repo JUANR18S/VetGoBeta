@@ -11,17 +11,24 @@ import android.widget.Toast
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts   // 🔵 GOOGLE
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import android.view.View
 
+// 🔵 GOOGLE - imports
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.SignInButton
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
 
 class MainActivity : AppCompatActivity() {
 
-    // 1) Referencias XML
     private lateinit var tilEmail: TextInputLayout
     private lateinit var tilPass:  TextInputLayout
     private lateinit var etEmail:  TextInputEditText
@@ -29,26 +36,63 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnLogin: Button
     private lateinit var tvRegister: TextView
     private lateinit var tvForgot:   TextView
+    private lateinit var btnGoogle:  SignInButton // 🔵 GOOGLE
 
-    // 2) ACCESO A FIREBASE (no olvidar importar)
+    // Firebase
     private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
+
+    // 🔵 GOOGLE - launcher moderno (en vez de onActivityResult)
+    private val googleLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)!!
+            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+            FirebaseAuth.getInstance().signInWithCredential(credential)
+                .addOnCompleteListener(this) { authTask ->
+                    if (authTask.isSuccessful) {
+                        // Con Google el correo ya viene verificado → pasa las reglas de Firestore
+                        val user = FirebaseAuth.getInstance().currentUser
+                        if (user != null) {
+                            // crear /users/{uid} si no existe (idempotente)
+                            val uid = user.uid
+                            val userDoc = db.collection("users").document(uid)
+                            userDoc.get().addOnSuccessListener { snap ->
+                                if (!snap.exists()) {
+                                    val data = mapOf(
+                                        "email" to user.email,
+                                        "provider" to "google",
+                                        "createdAt" to System.currentTimeMillis()
+                                    )
+                                    userDoc.set(data)
+                                }
+                            }
+                        }
+                        startActivity(Intent(this, Maps_Activity::class.java))
+                        finish()
+                    } else {
+                        Toast.makeText(this, "Error al iniciar con Google", Toast.LENGTH_SHORT).show()
+                    }
+                }
+        } catch (e: ApiException) {
+            Toast.makeText(this, "Fallo Google: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        // --- CÓDIGO PARA COLOREAR EL TEXTO ---
+        // --- Logo "VetGo" coloreado ---
         val tvTitle = findViewById<TextView>(R.id.tvTitle)
-        val fullText = getString(R.string.title) // Asumiendo que tu string es "VetGo"
-
+        val fullText = getString(R.string.title)
         val spannable = SpannableStringBuilder(fullText)
         val greenColor = ContextCompat.getColor(this, R.color.green)
-
-        // Encuentra el inicio de la subcadena "Go"
         val startIndex = fullText.indexOf("Go")
         if (startIndex != -1) {
-            // Aplica el color verde a la subcadena "Go"
             spannable.setSpan(
                 ForegroundColorSpan(greenColor),
                 startIndex,
@@ -56,9 +100,7 @@ class MainActivity : AppCompatActivity() {
                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
             )
         }
-
         tvTitle.text = spannable
-        // --- FIN DEL CÓDIGO PARA COLOREAR ---
 
         val root = findViewById<View>(R.id.main)
         root?.let {
@@ -68,102 +110,108 @@ class MainActivity : AppCompatActivity() {
                 insets
             }
         }
-        /*
 
-         */
-        // 3) INSTANCIA DE FIREBASE Auth (OK)
+        // Firebase
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
-        // 4) VINCULACIÓN DE REFERENCIAS XML (OK)
+        // --- UI ---
         tilEmail   = findViewById(R.id.tilEmail)
         tilPass    = findViewById(R.id.tilPass)
         etEmail    = findViewById(R.id.etEmail)
         etPass     = findViewById(R.id.etPass)
         btnLogin   = findViewById(R.id.btnLogin)
         tvRegister = findViewById(R.id.tvRegister)
-        tvForgot   = findViewById(R.id.tvForgot)   // <- Recien creada✔️
+        tvForgot   = findViewById(R.id.tvForgot)
+        btnGoogle  = findViewById(R.id.btnGoogleSignIn) // 🔵 GOOGLE
 
-        // 5) INICIO DE SESIÓN📝
+        // 🔵 GOOGLE - configuración del cliente
+        // Usa el client ID que viene en google-services.json como default_web_client_id
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        val googleClient = GoogleSignIn.getClient(this, gso)
+
+        btnGoogle.setOnClickListener {
+            googleLauncher.launch(googleClient.signInIntent)
+        }
+
+        // 🔑 LOGIN Email/Password (tu flujo original)
         btnLogin.setOnClickListener {
-
-            // 5.1 LIMPIAR ERRORES🆑
             tilEmail.error = null
             tilPass.error  = null
 
-            // 5.2 Toma los valores ingresados por el usuario
             val email = etEmail.text?.toString()?.trim().orEmpty()
             val pass  = etPass.text?.toString()?.trim().orEmpty()
 
-            // 5.3 Validaciones correo clave
             var ok = true
-            if (email.isBlank()) {
-                tilEmail.error = "Ingresa tu email"; ok = false }
-            if (pass.isBlank())  {
-                tilPass.error  = "Ingresa tu contraseña"; ok = false }
+            if (email.isBlank()) { tilEmail.error = "Ingresa tu email"; ok = false }
+            if (pass.isBlank())  { tilPass.error  = "Ingresa tu contraseña"; ok = false }
             if (!ok) return@setOnClickListener
 
-            // 5.4 Llama a Firebase (asincronico)
             auth.signInWithEmailAndPassword(email, pass)
                 .addOnSuccessListener {
-                    // 5.5 Navega del mapa (pantalla principal)
-                    startActivity(Intent(
-                        this, Maps_Activity::class.java))
-                    finish() // evita volver al login con Back
+                    val user = it.user
+                    if (user != null && user.isEmailVerified) {
+                        // crea documento /users/{uid} si aún no existe
+                        val uid = user.uid
+                        val userDoc = db.collection("users").document(uid)
+                        userDoc.get().addOnSuccessListener { snap ->
+                            if (!snap.exists()) {
+                                val data = mapOf(
+                                    "email" to user.email,
+                                    "provider" to "password",
+                                    "createdAt" to System.currentTimeMillis()
+                                )
+                                userDoc.set(data)
+                            }
+                        }
+                        startActivity(Intent(this, Maps_Activity::class.java))
+                        finish()
+                    } else {
+                        auth.signOut()
+                        Toast.makeText(this, "Verifica tu correo antes de ingresar.", Toast.LENGTH_LONG).show()
+                    }
                 }
-
                 .addOnFailureListener { e ->
-                    // 5.6 Muestra el motivo (credenciales inválidas, usuario no existe, etc.)
-                    Toast.makeText(
-                        this,
-                        e.localizedMessage ?: "No se pudo iniciar sesión",
-                        Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, e.localizedMessage ?: "No se pudo iniciar sesión", Toast.LENGTH_SHORT).show()
                 }
         }
 
-        // 6) Ir a Registro (pantalla para crear cuenta)
+        // Ir al registro
         tvRegister.setOnClickListener {
-            startActivity(Intent(this,
-                RegisterActivity::class.java))
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
 
-        // 7) Restablecer contraseña (enlace por correo)
+        // Restablecer contraseña
         tvForgot.setOnClickListener {
             val email = etEmail.text?.toString()?.trim().orEmpty()
             if (email.isBlank()) {
-                Toast.makeText(this,
-                    "Escribe tu email para enviarte el enlace",
-                    Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Escribe tu email para enviarte el enlace", Toast.LENGTH_SHORT).show()
             } else {
                 auth.sendPasswordResetEmail(email)
                     .addOnSuccessListener {
-                        Toast.makeText(this,
-                            "Te enviamos un enlace para restablecer",
-                            Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Te enviamos un enlace para restablecer", Toast.LENGTH_SHORT).show()
                     }
                     .addOnFailureListener { e ->
-                        Toast.makeText(this,
-                            e.localizedMessage ?: "No se pudo enviar el correo",
-                            Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, e.localizedMessage ?: "No se pudo enviar el correo", Toast.LENGTH_SHORT).show()
                     }
             }
-        }
-
-        //  Ajuste visual edge-to-edge si tu raíz tiene id @id/main
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-            insets
         }
     }
 
     override fun onStart() {
         super.onStart()
-
-
-        // 8) Auto-login: si ya hay sesión, entra directo al mapa
-        if (FirebaseAuth.getInstance().currentUser != null) {
+        // Auto-login solo si correo verificado (para password)
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null && (currentUser.isEmailVerified || currentUser.providerData.any { it.providerId == "google.com" })) {
+            // Si es Google, no necesita emailVerified (ya viene verificado por Google)
             startActivity(Intent(this, Maps_Activity::class.java))
             finish()
+        } else if (currentUser != null) {
+            FirebaseAuth.getInstance().signOut()
         }
     }
 }
+

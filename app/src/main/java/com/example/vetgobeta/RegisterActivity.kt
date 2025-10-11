@@ -30,9 +30,13 @@ import com.google.firebase.firestore.FirebaseFirestore
  * 1) Usuario llena formulario y pulsa "Crear cuenta".
  * 2) Validamos en cliente (campos y formatos).
  * 3) Creamos usuario en Firebase Auth (email/clave).
- * 4) Guardamos datos extra en Firestore (/users/{uid}).
+ * 4) (DEFERIDO) Guardar datos extra en Firestore al primer login verificado.
  * 5) Enviamos email de verificación y volvemos al Login.
  * Botón "Cancelar": confirma si hay datos escritos y sale.
+ *
+ * 🔐 Importante:
+ * - NO permitimos entrar si !emailVerified (se controla en LoginActivity).
+ * - Las reglas de Firestore deben usar request.auth.token.email_verified == true.
  */
 class RegisterActivity : AppCompatActivity() {
 
@@ -96,7 +100,6 @@ class RegisterActivity : AppCompatActivity() {
             finish()
         }
 
-
         // Crear cuenta
         btnCreate.setOnClickListener { createAccount() }
 
@@ -137,8 +140,9 @@ class RegisterActivity : AppCompatActivity() {
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             tilEmail.error = "Correo inválido"; ok = false
         }
-        if (p1.length < 6) {
-            tilP1.error = "Mínimo 6 caracteres"; ok = false
+        // 🔧 CHANGE: subir mínimo de 6 → 8 para mejor seguridad
+        if (p1.length < 8) {
+            tilP1.error = "Mínimo 8 caracteres"; ok = false
         }
         if (p1 != p2) {
             tilP2.error = "Las contraseñas no coinciden"; ok = false
@@ -149,32 +153,31 @@ class RegisterActivity : AppCompatActivity() {
         btnCreate.isEnabled = false
         btnCreate.isPressed = false
         btnCreate.isSelected = false
-        btnCreate.isEnabled = false
 
         // 4) Crear usuario en Auth
         auth.createUserWithEmailAndPassword(email, p1)
-            .addOnSuccessListener {
+            .addOnSuccessListener { result ->
+                // 🔧 CHANGE: no intentamos escribir en Firestore aquí si rules requieren email verificado.
+                // Deferimos el guardado a primer login verificado (en LoginActivity).
+                // Si quisieras crear "pending_users", aquí sería el sitio.
+
                 auth.currentUser?.sendEmailVerification()
-                toast("Cuenta creada. Revisa tu correo para verificar.")
+                    ?.addOnCompleteListener {
+                        toast("Cuenta creada. Revisa tu correo para verificar.")
+                        // Notificación local
+                        notifySuccess()
+                        // 🔧 CHANGE: cerramos sesión para forzar verificación antes del primer login
+                        auth.signOut()
 
-                // Notificación local (si Android 13+, pedirá permiso una vez)
-                notifySuccess()
+                        // Mostrar botón "Iniciar sesión" y bloquear "Crear cuenta"
+                        btnSignIn.visibility = View.VISIBLE
+                        btnSignIn.isEnabled = true
+                        btnCreate.isEnabled = false
 
-                // Cerrar sesión para que MainActivity no salte al mapa
-                auth.signOut()
-
-                // Mostrar botón "Iniciar sesión" y bloquear "Crear cuenta"
-                btnSignIn.visibility = View.VISIBLE
-                btnSignIn.isEnabled = true
-                btnCreate.isEnabled = false
-
-                // IMPORTANTE: no llames finish() aquí
+                        // 🔧 KEEP: no hacemos finish() para permitir que el usuario toque "Iniciar sesión"
+                    }
             }
-            .addOnFailureListener { e ->
-                toast(e.localizedMessage ?: "Error guardando datos")
-                btnCreate.isEnabled = true
-            }
-
+            // 🔧 CHANGE: tenías dos addOnFailureListener; dejamos UNO claro y con mensaje consistente
             .addOnFailureListener { e ->
                 toast(e.localizedMessage ?: "Error al registrar")
                 btnCreate.isEnabled = true
@@ -207,12 +210,11 @@ class RegisterActivity : AppCompatActivity() {
             .show()
     }
 
-
-
     // ¿Está todo en blanco?
     private fun isFormEmpty(): Boolean =
         listOf(etName, etPhone, etDoc, etEmail, etP1, etP2)
             .all { it.text.isNullOrBlank() }
+
     private fun toast(msg: String) =
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 
@@ -225,8 +227,8 @@ class RegisterActivity : AppCompatActivity() {
             this,                                   // context
             0,                                      // requestCode
             intent,                                 // intent
-            PendingIntent.FLAG_UPDATE_CURRENT or    // flags
-                    PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or    // flags_
+            PendingIntent.FLAG_IMMUTABLE
         )
 
         val notif = NotificationCompat.Builder(this, "vetgo_general")
@@ -255,7 +257,6 @@ class RegisterActivity : AppCompatActivity() {
             toast("Por favor, activa las notificaciones para recibir alertas importantes.")
         }
     }
-
 
     // --- Crear Canal de Notificación (Obligatorio para Android 8.0 Oreo y superior) ---
     private fun createNotificationChannel() {
@@ -288,5 +289,4 @@ class RegisterActivity : AppCompatActivity() {
             }
         }
     }
-
 }
