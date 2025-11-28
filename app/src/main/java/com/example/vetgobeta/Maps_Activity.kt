@@ -38,7 +38,7 @@ class Maps_Activity : AppCompatActivity(), OnMapReadyCallback {
         ViewCompat.setElevation(fab, 16f)
 
         fab.setOnClickListener { anchor ->
-            Toast.makeText(this, "FAB clickeado", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Abriendo menú.", Toast.LENGTH_SHORT).show()
 
             val popup = PopupMenu(this, anchor)
             popup.menuInflater.inflate(R.menu.menu_maps, popup.menu)
@@ -92,9 +92,9 @@ class Maps_Activity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
 
-        // Ejemplo: Mover la cámara a una ubicación específica (ej. Ciudad de México)
-        val mexicoCity = LatLng(19.4326, -99.1332)
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(mexicoCity, 10f))
+        // Mover la cámara a una ubicación específica (Medellín, Colombia)
+        val medellin = LatLng(6.2442, -75.5812)
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(medellin, 12f))
 
         // Puedes añadir marcadores, polígonos, etc. aquí
     }
