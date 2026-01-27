@@ -14,14 +14,7 @@
       },
       "oauth_client": [
         {
-          "client_id": "155597930475-o91epndhk7k9oqfblsi0id7413007abo.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.vetgobeta",
-            "certificate_hash": "e40551a8578376027c6c446e455a862f16a94c0a"
-          }
-        },
-        {
+
           "client_id": "155597930475-q3su90k9hatbusbrhvjv8dv6k0ec9gq0.apps.googleusercontent.com",
           "client_type": 3
         }
