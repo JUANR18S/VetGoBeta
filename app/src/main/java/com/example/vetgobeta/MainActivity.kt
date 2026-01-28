@@ -26,6 +26,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.FirebaseUser
 
 class MainActivity : AppCompatActivity() {
 
@@ -153,26 +154,7 @@ class MainActivity : AppCompatActivity() {
             auth.signInWithEmailAndPassword(email, pass)
                 .addOnSuccessListener {
                     val user = it.user
-                    if (user != null && user.isEmailVerified) {
-                        // crea documento /users/{uid} si aún no existe
-                        val uid = user.uid
-                        val userDoc = db.collection("users").document(uid)
-                        userDoc.get().addOnSuccessListener { snap ->
-                            if (!snap.exists()) {
-                                val data = mapOf(
-                                    "email" to user.email,
-                                    "provider" to "password",
-                                    "createdAt" to System.currentTimeMillis()
-                                )
-                                userDoc.set(data)
-                            }
-                        }
-                        startActivity(Intent(this, Maps_Activity::class.java))
-                        finish()
-                    } else {
-                        auth.signOut()
-                        Toast.makeText(this, "Verifica tu correo antes de ingresar.", Toast.LENGTH_LONG).show()
-                    }
+                    validateUserSession(user)
                 }
                 .addOnFailureListener { e ->
                     Toast.makeText(this, e.localizedMessage ?: "No se pudo iniciar sesión", Toast.LENGTH_SHORT).show()
@@ -204,14 +186,51 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         // Auto-login solo si correo verificado (para password)
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null && (currentUser.isEmailVerified || currentUser.providerData.any { it.providerId == "google.com" })) {
-            // Si es Google, no necesita emailVerified (ya viene verificado por Google)
-            startActivity(Intent(this, Maps_Activity::class.java))
-            finish()
-        } else if (currentUser != null) {
-            FirebaseAuth.getInstance().signOut()
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        currentUser.reload().addOnCompleteListener {
+            val refreshedUser = FirebaseAuth.getInstance().currentUser
+            if (isValidSession(refreshedUser)) {
+                // Si es Google, no necesita emailVerified (ya viene verificado por Google)
+                startActivity(Intent(this, Maps_Activity::class.java))
+                finish()
+            } else {
+                FirebaseAuth.getInstance().signOut()
+            }
         }
     }
-}
 
+    private fun validateUserSession(user: FirebaseUser?) {
+        user?.reload()?.addOnCompleteListener {
+            val refreshedUser = FirebaseAuth.getInstance().currentUser
+            if (isValidSession(refreshedUser)) {
+                // crea documento /users/{uid} si aún no existe
+                val uid = refreshedUser?.uid ?: return@addOnCompleteListener
+                val userDoc = db.collection("users").document(uid)
+                userDoc.get().addOnSuccessListener { snap ->
+                    if (!snap.exists()) {
+                        val provider = if (refreshedUser.providerData.any { it.providerId == "google.com" }) {
+                            "google"
+                        } else {
+                            "password"
+                        }
+                        val data = mapOf(
+                            "email" to refreshedUser.email,
+                            "provider" to provider,
+                            "createdAt" to System.currentTimeMillis()
+                        )
+                        userDoc.set(data)
+                    }
+                }
+                startActivity(Intent(this, Maps_Activity::class.java))
+                finish()
+            } else {
+                auth.signOut()
+                Toast.makeText(this, "Verifica tu correo antes de ingresar.", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun isValidSession(user: FirebaseUser?): Boolean {
+        return user != null && (user.isEmailVerified || user.providerData.any { it.providerId == "google.com" })
+    }
+}

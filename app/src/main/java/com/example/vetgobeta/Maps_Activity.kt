@@ -17,10 +17,20 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 
 class Maps_Activity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var map: GoogleMap
+    private val googleClient by lazy {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        GoogleSignIn.getClient(this, gso)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,10 +92,26 @@ class Maps_Activity : AppCompatActivity(), OnMapReadyCallback {
         val btnCerrarSesion = findViewById<Button>(R.id.btnVolverLogin)
         btnCerrarSesion.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
-            val intent = Intent(this, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
+            googleClient.signOut().addOnCompleteListener {
+                navigateToLogin()
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            navigateToLogin()
+            return
+        }
+
+        currentUser.reload().addOnCompleteListener {
+            val refreshedUser = FirebaseAuth.getInstance().currentUser
+            if (!isValidSession(refreshedUser)) {
+                FirebaseAuth.getInstance().signOut()
+                googleClient.signOut().addOnCompleteListener { navigateToLogin() }
+            }
         }
     }
 
@@ -97,5 +123,16 @@ class Maps_Activity : AppCompatActivity(), OnMapReadyCallback {
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(medellin, 12f))
 
         // Puedes añadir marcadores, polígonos, etc. aquí
+    }
+
+    private fun isValidSession(user: FirebaseUser?): Boolean {
+        return user != null && (user.isEmailVerified || user.providerData.any { it.providerId == "google.com" })
+    }
+
+    private fun navigateToLogin() {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 }
